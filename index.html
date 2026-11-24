@@ -140,7 +140,7 @@ h1{color:var(--petr)}
       <ul class="read" id="read"></ul>
     </div>
 
-    <p class="note"><b>Cómo se juega.</b> Elegí una herramienta y tocá una luz de 12 m, en la tira o en el 3D. Cada luz tiene un suelo (plaza líquida, jardín o solado), hasta tres cajas colgadas a +3, a media altura y bajo la cubierta (el cuarto toque la cierra como el auditorio) y, si querés, una cisterna en la cara sur que junta la lluvia de las bóvedas. El aire entra por los pilotis, se enfría o se calienta según el suelo, viaja con el viento a lo largo de la nave y sube por las losas caladas hasta salir por las bóvedas hacia el norte y el sur. Las cajas tienen paneles PIR de 100 mm y doble vidrio de control solar: su masa y su aislación amortiguan el pico de la tarde. El confort mide qué parte de la plaza y de las cajas queda dentro de la banda adaptativa de São Paulo. Geometría de <b>VolumenEdificio.ifc</b>. Modelo didáctico simplificado para comparar decisiones; no reemplaza una simulación energética.</p>
+    <p class="note"><b>Cómo se juega.</b> Elegí una herramienta y tocá una luz de 12 m, en la tira o en el 3D. Cada luz tiene un suelo (plaza líquida, jardín o solado), hasta tres cajas colgadas a +3, a media altura y bajo la cubierta (el cuarto toque la cierra como el auditorio) y, si querés, una cisterna elevada en la cara sur (dos volúmenes de 12 × 3 m a +6 y +12) que guarda la lluvia de las bóvedas. El aire entra por los pilotis, se enfría o se calienta según el suelo, viaja con el viento a lo largo de la nave y sube por las losas caladas hasta salir por las bóvedas hacia el norte y el sur. Las cajas tienen paneles PIR de 100 mm y doble vidrio de control solar: su masa y su aislación amortiguan el pico de la tarde. El confort mide qué parte de la plaza y de las cajas queda dentro de la banda adaptativa de São Paulo. Geometría de <b>VolumenEdificio.ifc</b>. Modelo didáctico simplificado para comparar decisiones; no reemplaza una simulación energética.</p>
   </div>
 </div>
 
@@ -158,7 +158,9 @@ const CL={
 /* envolventes: panel PIR 100 mm (U 0,15–0,3), doble vidrio de control solar (Ug 1,4; g 0,30–0,35); sw = amortiguación de la onda diaria por masa y aislación */
 const MAT={vidrio:{wwr:.85,g:.35,Ug:1.4,Uo:.3,f:.7,sw:.85},mixto:{wwr:.45,g:.3,Ug:1.4,Uo:.18,f:.6,sw:.6},opaco:{wwr:.12,g:.3,Ug:1.4,Uo:.15,f:.55,sw:.5}};
 const ROOF={etfe:{shade:.5,tau:.5,open:1,rad:0,run:.9},chapa:{shade:.92,tau:.06,open:.9,rad:.35,run:.9},abierta:{shade:0,tau:1,open:1.25,rad:0,run:0}};
-const LLUVIA=1.45,CIST=150,CICLOS=6; // m/año en São Paulo · m³ por cisterna · llenados útiles por año
+const LLUVIA=1.45,CICLOS=4; // m/año en São Paulo · llenados útiles por año
+const cistH=H=>(H-7.6)/2; // alto de cada volumen cisterna (5,2 m con la nave de 18 m, como en el IFC)
+const cistCap=H=>2*12*3*cistH(H)*.85; // m³ útiles por luz: dos volúmenes de 12 × 3 m
 const wbulb=(T,RH)=>T*Math.atan(.151977*Math.sqrt(RH+8.313659))+Math.atan(T+RH)-Math.atan(RH-1.676331)+.00391838*Math.pow(RH,1.5)*Math.atan(.023101*RH)-4.686035;
 const slotZ=H=>({low:3,mid:Math.max(6,Math.floor(H/2/3)*3),top:H-3});
 const ORDER=["mid","top","low"];
@@ -170,6 +172,7 @@ function ifcBays(){
   for(let i=0;i<4;i++)b[i].full=1;           // auditorio +3 a +15
   b[4].g="verde";                             // foyer y plataforma pública
   b[5].s.top=1;                               // oficinas +14,6
+  b[1].c=1;                                   // cisternas elevadas de la cara sur (IFC)
   b[6].s.low=1;b[6].s.mid=1;b[6].g="agua";b[6].c=1;   // biblioteca · laboratorio +9 · estanque · cisterna sur
   b[7].s.low=1;b[7].s.top=1;
   b[8].s.mid=1;b[8].g="agua";b[8].c=1;
@@ -230,7 +233,7 @@ function sim(st,season){
   const prog=boxes.reduce((s,x)=>s+(x.full?360*4:360),0);
   // agua de lluvia: lo que juntan las bóvedas, lo que guardan las cisternas, lo que piden plazas líquidas y jardines
   const nA=st.bays.filter(b=>b.g=="agua").length,nV=st.bays.filter(b=>b.g=="verde").length,nC=st.bays.filter(b=>b.c).length;
-  const capta=N*432*LLUVIA*R.run,cap=nC*CIST,demanda=nA*432*1.1+nV*432*.5+prog*.3,util=Math.min(capta,cap*CICLOS,demanda>0?demanda:Infinity);
+  const capta=N*432*LLUVIA*R.run,cap=nC*cistCap(H),demanda=nA*432*1.1+nV*432*.5+prog*.3,util=Math.min(capta,cap*CICLOS,demanda>0?demanda:Infinity);
   const acero=Math.round((N+1)*16*Math.pow(H/18,1.3)+boxes.reduce((s,x)=>s+(x.full?18:6),0));
   return{C,M,bays,T0,Top0,TL,boxes,confort,prog,acero,Dw,ex,nz,a,H,nL,N,capta,cap,demanda,util,nC,nA,nV,
     llenado:cap?Math.min(1,capta/(cap*CICLOS)):0,
@@ -368,16 +371,18 @@ function build(){
   }
   [18,15,-15,-18].forEach(z=>addBox(L,.3,.3,0,H,z,steel,false));
   const gc={agua:0x5f9696,verde:0x8fa486,duro:0xcfc6ba};
-  const tankMat=new THREE.MeshLambertMaterial({color:0x9fb9bf,transparent:true,opacity:.35,depthWrite:false}),wMat=new THREE.MeshLambertMaterial({color:0x042A2B}),pipe=new THREE.MeshLambertMaterial({color:0x042A2B});
+  const tankMat=new THREE.MeshLambertMaterial({color:0xBDD2B6,transparent:true,opacity:.45,depthWrite:false}),wMat=new THREE.MeshLambertMaterial({color:0x042A2B}),pipe=new THREE.MeshLambertMaterial({color:0x042A2B});
   S.bays.forEach((b,i)=>{const cx=x0+i*12+6;
     const g=new THREE.Mesh(new THREE.PlaneGeometry(12,36),new THREE.MeshLambertMaterial({color:gc[b.g],emissive:b.g=="agua"?0x0c2a2a:0x000000}));g.rotation.x=-Math.PI/2;g.position.set(cx,.03,0);g.receiveShadow=true;g.userData.bay=i;root.add(g);bayHits.push(g);
     if(b.g=="verde"){const tm=new THREE.MeshLambertMaterial({color:0x6f8a63});for(let k=0;k<5;k++){const t=new THREE.Mesh(new THREE.SphereGeometry(1.4+((i*7+k*3)%5)*.18,10,8),tm);t.scale.y=.8;t.position.set(cx-4+((k*5+i)%9),1.1,-12+k*6);t.castShadow=true;root.add(t)}}
     if(b.g=="agua"){const fm=new THREE.MeshLambertMaterial({color:0xdfeceb,transparent:true,opacity:.35,depthWrite:false});for(let k=0;k<3;k++){const f=new THREE.Mesh(new THREE.SphereGeometry(2.2,10,8),fm);f.scale.set(1.4,.5,1.4);f.position.set(cx,1.2,-8+k*8);root.add(f)}}
-    if(b.c){ // dos tanques de 75 m³ en la cara sur, bajada pluvial desde la canaleta de las bóvedas
-      [-3,3].forEach(dx=>{const t=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,5,20,1,true),tankMat);t.position.set(cx+dx,2.5,22.5);t.userData.bay=i;root.add(t);bayHits.push(t);
-        const lid=new THREE.Mesh(new THREE.CircleGeometry(2.4,20),wMat);lid.rotation.x=-Math.PI/2;lid.position.set(cx+dx,5,22.5);root.add(lid);
-        const w=new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,1,20),wMat);w.userData.dx=dx;w.position.set(cx+dx,.5,22.5);root.add(w);waterMeshes.push(w)});
-      addBox(.25,H-5,.25,cx,5+(H-5)/2,19.6,pipe,false);addBox(6,.25,.25,cx,5.1,21,pipe,false);addBox(.25,.25,3,cx,5.1,20.3,pipe,false);
+    if(b.c){ // cisternas elevadas de la cara sur (familias "Guardados" del IFC): dos volúmenes de 12 × 3 m colgados al sur de la pata, a +6 y a media altura
+      const hc=cistH(H);[6,6+hc+.8].forEach(z0=>{
+        const t=addBox(11.6,hc,3,cx,z0+hc/2,19.5,tankMat,true);t.userData.bay=i;bayHits.push(t);
+        const e=new THREE.LineSegments(new THREE.EdgesGeometry(t.geometry),new THREE.LineBasicMaterial({color:0x042A2B,transparent:true,opacity:.7}));e.position.copy(t.position);root.add(e);
+        const w=new THREE.Mesh(new THREE.BoxGeometry(11.3,1,2.7),wMat);w.userData.z0=z0;w.userData.hc=hc;w.position.set(cx,z0+.5,19.5);root.add(w);waterMeshes.push(w);
+        addBox(11.8,.25,3.3,cx,z0-.12,19.5,pipe,false)});
+      addBox(.25,6,.25,cx-5.6,3,19.5,pipe,false);addBox(.25,6,.25,cx+5.6,3,19.5,pipe,false); // bajada hacia los estanques
     }
   });
   if(R.nC&&R.capta>0)addBox(L,.35,.5,0,H+.1,18.3,pipe,false); // canaleta sur que recoge el agua de las bóvedas
@@ -403,7 +408,7 @@ function recolor(){
   if(!root)return;
   boxMeshes.forEach(m=>{const x=R.boxes[m.userData.box];if(x)m.material.color.copy(col3(x.T))});
   if(S.roof=="etfe")vaultMeshes.forEach(m=>m.material.color.copy(col3(R.TL[m.userData.bay][R.nL])));
-  const h=Math.max(.15,5*R.llenado);waterMeshes.forEach(w=>{w.scale.y=h;w.position.y=h/2});
+  waterMeshes.forEach(w=>{const h=Math.max(.15,(w.userData.hc-.3)*R.llenado);w.scale.y=h;w.position.y=w.userData.z0+.15+h/2});
   if(S.sel>=0&&S.sel<S.bays.length){selMesh.visible=true;selMesh.position.set(-S.bays.length*6+S.sel*12+6,.15,0)}else selMesh.visible=false;
 }
 let pulseT=0;function pulse(){pulseT=performance.now()}
