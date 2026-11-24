@@ -8,19 +8,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: una sola pantalla de teléfono. Visor 3D arriba, marcador, tira de luces de 12 m como tablero y controles compactos; en escritorio, dos columnas. Paleta de las láminas del proyecto. */
+/* Un solo tema, claro, comprometido con la paleta de las láminas finales: beige de fondo, verdes análogos, azul petróleo y bordó como acentos. No cambia con el modo oscuro del teléfono. */
 :root{
-  --paper:#F8EDE3; --card:#FFFAF5; --ink:#1f2421; --mut:#5f6a5d; --ln:#d9cfc2;
-  --sage-d:#798777; --sage-l:#BDD2B6; --petr:#042A2B; --water:#5f9696; --hard:#cfc6ba; --cist:#2f5d6e;
-  --acc:#510D0A; --acc-ink:#fff; --chip:#efe4d8; --good:#5b7d54; --warn:#b8643f; --bad:#7a1f17; --view:#e9e1d6;
+  --paper:#F8EDE3; --card:#FCF5EE; --ink:#042A2B; --mut:#798777; --ln:#C9D4C3;
+  --sage-d:#798777; --sage-m:#A2B29F; --sage-l:#BDD2B6; --petr:#042A2B; --water:#5f9696; --hard:#d8cdbf; --cist:#042A2B;
+  --acc:#510D0A; --acc-ink:#F8EDE3; --chip:#E8EADC; --good:#798777; --warn:#C98E78; --bad:#510D0A; --view:#F3E6D8;
   --f-disp:"Archivo","Arial Narrow",system-ui,sans-serif; --f-body:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#0f1a1a; --card:#162424; --ink:#ece6dc; --mut:#9fae9c; --ln:#2b3b3a; --chip:#1f302f; --view:#132020;
-  --acc:#d9826a; --acc-ink:#1b0b09; --hard:#8f877d; --water:#4f8a8b; --cist:#6fa3b5; --good:#9cc28f; --warn:#e3a07c; --bad:#f08a7a; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --paper:#0f1a1a; --card:#162424; --ink:#ece6dc; --mut:#9fae9c; --ln:#2b3b3a; --chip:#1f302f; --view:#132020;
-  --acc:#d9826a; --acc-ink:#1b0b09; --hard:#8f877d; --water:#4f8a8b; --cist:#6fa3b5; --good:#9cc28f; --warn:#e3a07c; --bad:#f08a7a; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font:14px/1.35 var(--f-body);margin:0;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px));padding-block:8px 20px}
 .app{max-width:1180px;margin:0 auto;display:grid;gap:6px;grid-template-columns:minmax(0,1fr)}
@@ -80,8 +75,10 @@ h1 small{display:block;font:600 9px/1.2 var(--f-mono);letter-spacing:.06em;text-
 .presets{grid-column:1/-1;display:flex;gap:4px}
 .pre{flex:1;appearance:none;border:1px solid var(--ln);background:var(--card);color:var(--ink);border-radius:99px;padding:6px 6px;font:600 11px/1 var(--f-body);cursor:pointer;white-space:nowrap}
 .pre.main{background:var(--petr);border-color:var(--petr);color:#F8EDE3}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pre.main{background:var(--sage-l);border-color:var(--sage-l);color:#042A2B}}
-:root[data-theme="dark"] .pre.main{background:var(--sage-l);border-color:var(--sage-l);color:#042A2B}
+.panel{box-shadow:0 1px 0 rgba(4,42,43,.04)}
+.seg button[aria-pressed="true"]{background:var(--petr);color:#F8EDE3;box-shadow:none}
+h1{color:var(--petr)}
+.ov{background:rgba(248,237,227,.9);color:var(--petr);border:1px solid var(--ln)}
 .lbl{font:600 9.5px/1.2 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:0 0 5px}
 .read{display:grid;gap:5px;margin:0;padding:0;list-style:none}
 .read li{font-size:13px;line-height:1.38;padding-left:12px;position:relative}
@@ -341,8 +338,8 @@ function init3D(){
   controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=40;controls.maxDistance=520;
   scene.add(new THREE.HemisphereLight(0xfff6ea,0x6b7a68,.75));
   sun=new THREE.DirectionalLight(0xfff1dc,.85);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);const sc=sun.shadow.camera;sc.left=-130;sc.right=130;sc.top=90;sc.bottom=-90;sc.near=10;sc.far=600;scene.add(sun);scene.add(sun.target);
-  const site=new THREE.Mesh(new THREE.PlaneGeometry(900,600),new THREE.MeshLambertMaterial({color:0xe6dccf}));site.rotation.x=-Math.PI/2;site.position.y=-.05;site.receiveShadow=true;scene.add(site);
-  const river=new THREE.Mesh(new THREE.PlaneGeometry(900,70),new THREE.MeshLambertMaterial({color:0x2f5d5e}));river.rotation.x=-Math.PI/2;river.position.set(0,-.02,-75);scene.add(river);
+  const site=new THREE.Mesh(new THREE.PlaneGeometry(900,600),new THREE.MeshLambertMaterial({color:0xF1E4D6}));site.rotation.x=-Math.PI/2;site.position.y=-.05;site.receiveShadow=true;scene.add(site);
+  const river=new THREE.Mesh(new THREE.PlaneGeometry(900,70),new THREE.MeshLambertMaterial({color:0x6f9190}));river.rotation.x=-Math.PI/2;river.position.set(0,-.02,-75);scene.add(river);
   const rl=textSprite("RÍO TIETÊ",7,"#F8EDE3");rl.position.set(0,1,-70);scene.add(rl);
   const city=textSprite("CIUDAD · SUR",5,"#798777");city.position.set(0,1,50);scene.add(city);
   root=new THREE.Group();scene.add(root);
@@ -361,7 +358,7 @@ function build(){
   while(root.children.length){const o=root.children.pop();o.traverse(m=>{if(m.geometry)m.geometry.dispose()})}
   bayHits=[];boxMeshes=[];vaultMeshes=[];waterMeshes=[];
   const N=S.bays.length,L=N*12,H=S.H,x0=-L/2;
-  const steel=new THREE.MeshLambertMaterial({color:0x3b403b});
+  const steel=new THREE.MeshLambertMaterial({color:0x042A2B});
   const addBox=(w,h,d,x,y,z,mat,cast=true)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;root.add(m);return m};
   for(let p=0;p<=N;p++){const x=x0+p*12;
     [18,15,-15,-18].forEach(z=>addBox(.45,H,.45,x,H/2,z,steel));
@@ -371,7 +368,7 @@ function build(){
   }
   [18,15,-15,-18].forEach(z=>addBox(L,.3,.3,0,H,z,steel,false));
   const gc={agua:0x5f9696,verde:0x8fa486,duro:0xcfc6ba};
-  const tankMat=new THREE.MeshLambertMaterial({color:0x9fb9bf,transparent:true,opacity:.35,depthWrite:false}),wMat=new THREE.MeshLambertMaterial({color:0x2f5d6e}),pipe=new THREE.MeshLambertMaterial({color:0x2f5d6e});
+  const tankMat=new THREE.MeshLambertMaterial({color:0x9fb9bf,transparent:true,opacity:.35,depthWrite:false}),wMat=new THREE.MeshLambertMaterial({color:0x042A2B}),pipe=new THREE.MeshLambertMaterial({color:0x042A2B});
   S.bays.forEach((b,i)=>{const cx=x0+i*12+6;
     const g=new THREE.Mesh(new THREE.PlaneGeometry(12,36),new THREE.MeshLambertMaterial({color:gc[b.g],emissive:b.g=="agua"?0x0c2a2a:0x000000}));g.rotation.x=-Math.PI/2;g.position.set(cx,.03,0);g.receiveShadow=true;g.userData.bay=i;root.add(g);bayHits.push(g);
     if(b.g=="verde"){const tm=new THREE.MeshLambertMaterial({color:0x6f8a63});for(let k=0;k<5;k++){const t=new THREE.Mesh(new THREE.SphereGeometry(1.4+((i*7+k*3)%5)*.18,10,8),tm);t.scale.y=.8;t.position.set(cx-4+((k*5+i)%9),1.1,-12+k*6);t.castShadow=true;root.add(t)}}
@@ -388,15 +385,15 @@ function build(){
   R.boxes.forEach((x,j)=>{const cx=x0+x.i*12+6,h=x.full?H-3.6:3,y=x.z0+h/2+(x.full?0:.1);
     const mat=new THREE.MeshLambertMaterial({color:col3(x.T),transparent:M=="vidrio",opacity:M=="vidrio"?.72:1});
     const m=addBox(11.4,h,30,cx,y,0,mat);m.userData.bay=x.i;m.userData.box=j;bayHits.push(m);boxMeshes.push(m);
-    const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:0x2a2420,transparent:true,opacity:.55}));e.position.copy(m.position);root.add(e);
-    if(M!="opaco"){const mul=M=="vidrio"?6:3;for(let k=1;k<mul*2;k++){const z=-15+k*30/(mul*2);const mm=new THREE.Mesh(new THREE.BoxGeometry(11.5,h,.12),new THREE.MeshBasicMaterial({color:0x2a2420,transparent:true,opacity:.18}));mm.position.set(cx,y,z);root.add(mm)}}
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:0x042A2B,transparent:true,opacity:.55}));e.position.copy(m.position);root.add(e);
+    if(M!="opaco"){const mul=M=="vidrio"?6:3;for(let k=1;k<mul*2;k++){const z=-15+k*30/(mul*2);const mm=new THREE.Mesh(new THREE.BoxGeometry(11.5,h,.12),new THREE.MeshBasicMaterial({color:0x042A2B,transparent:true,opacity:.18}));mm.position.set(cx,y,z);root.add(mm)}}
   });
   if(S.roof!="abierta"){const rr=7.5,half=Math.asin(6/7.5),yc=H+3-rr,seg=16;
     S.bays.forEach((b,i)=>{const cx=x0+i*12+6,pos=[],idx=[];
       for(let u=0;u<=seg;u++){const ph=-half+2*half*u/seg,x=cx+rr*Math.sin(ph),y=yc+rr*Math.cos(ph);pos.push(x,y,-18,x,y,18)}
       for(let u=0;u<seg;u++){const a=u*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
       const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
-      const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:S.roof=="etfe"?col3(R.TL[i][R.nL]):0x9a9a94,side:THREE.DoubleSide,transparent:S.roof=="etfe",opacity:S.roof=="etfe"?.42:1,depthWrite:S.roof!="etfe"}));
+      const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:S.roof=="etfe"?col3(R.TL[i][R.nL]):0xA2B29F,side:THREE.DoubleSide,transparent:S.roof=="etfe",opacity:S.roof=="etfe"?.42:1,depthWrite:S.roof!="etfe"}));
       m.castShadow=true;m.receiveShadow=S.roof!="etfe";m.userData.bay=i;root.add(m);vaultMeshes.push(m)})}
   selMesh=new THREE.Mesh(new THREE.BoxGeometry(12,.2,36),new THREE.MeshBasicMaterial({color:0x510D0A,transparent:true,opacity:.35,depthWrite:false}));selMesh.visible=false;root.add(selMesh);
   const ew=textSprite("OESTE",4,"#510D0A");ew.position.set(x0-10,2,22);root.add(ew);const ee=textSprite("ESTE",4,"#510D0A");ee.position.set(-x0+10,2,22);root.add(ee);
@@ -452,4 +449,3 @@ update(false);
 init3D();
 })();
 </script>
-
